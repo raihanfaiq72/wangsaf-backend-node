@@ -110,6 +110,13 @@ export async function startBot(sessionId) {
         } else {
           console.log(`🗑️ Deleting session ${sessionId}`)
           delete sessions[sessionId]
+          
+          // Delete session folder
+          const sessionFolder = path.join(SESSION_DIR, sessionId)
+          if (fs.existsSync(sessionFolder)) {
+            fs.rmSync(sessionFolder, { recursive: true, force: true })
+            console.log(`🗑️ Deleted session folder: ${sessionFolder}`)
+          }
         }
       }
 
@@ -176,4 +183,11 @@ export async function logoutDevice(sessionId) {
   await session.sock.logout()
 
   delete sessions[sessionId]
+
+  // Delete session folder
+  const sessionFolder = path.join(SESSION_DIR, sessionId)
+  if (fs.existsSync(sessionFolder)) {
+    fs.rmSync(sessionFolder, { recursive: true, force: true })
+    console.log(`🗑️ Deleted session folder: ${sessionFolder}`)
+  }
 }
