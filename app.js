@@ -12,7 +12,9 @@ app.use('/', apiRoutes)
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, async () => {
-  console.log(`🚀 Server running on ${PORT}`)
+const HOST = "0.0.0.0";
+
+app.listen(PORT, HOST, async () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`)
   await restoreSessions()
 })
