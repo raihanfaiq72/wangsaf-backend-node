@@ -56,21 +56,29 @@ CREATE TABLE IF NOT EXISTS session_auth (
 
 -- -------------------------------------------------------
 -- messages
--- Outbound message log
+-- Outbound message log (all types: text, poll, image, etc.)
 -- -------------------------------------------------------
 CREATE TABLE IF NOT EXISTS messages (
   id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   session_id  VARCHAR(100) NOT NULL,
   recipient   VARCHAR(50)  NOT NULL,
-  message     TEXT         NOT NULL,
+  type        VARCHAR(30)  NOT NULL DEFAULT 'text',
+  message     TEXT         DEFAULT NULL,
+  payload     JSON         DEFAULT NULL,
   status      ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending',
   error       TEXT         DEFAULT NULL,
   sent_at     DATETIME     DEFAULT NULL,
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_session_id  (session_id),
   INDEX idx_recipient   (recipient),
+  INDEX idx_type        (type),
   INDEX idx_status      (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Migration: add columns if table already exists
+ALTER TABLE messages
+  ADD COLUMN IF NOT EXISTS type    VARCHAR(30) NOT NULL DEFAULT 'text' AFTER recipient,
+  ADD COLUMN IF NOT EXISTS payload JSON        DEFAULT NULL            AFTER message;
 
 -- -------------------------------------------------------
 -- incoming_messages
