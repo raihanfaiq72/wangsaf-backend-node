@@ -1,6 +1,6 @@
 
 import { sendAndLog, getOutboundMessages, getIncomingMessages } from '../services/MessageService.js'
-import { getSession, sendTextMessage } from '../services/WhatsAppService.js'
+import { getSession, sendTextMessage, sendPollMessage } from '../services/WhatsAppService.js'
 
 
 export async function send(req, res) {
@@ -66,6 +66,63 @@ export async function incoming(req, res) {
     const messages = await getIncomingMessages(sessionId, limit, offset)
 
     return res.json({ status: true, data: messages, limit, offset })
+  } catch (err) {
+    return res.status(500).json({ status: false, message: err.message })
+  }
+}
+
+/**
+ * POST /message/poll
+ * Send a poll message.
+ * Body: { sessionId, number, question, options: [...], selectableCount?, toAnnouncementGroup? }
+ */
+export async function sendPoll(req, res) {
+  try {
+    const {
+      sessionId,
+      number,
+      question,
+      options,
+      selectableCount = 1,
+      toAnnouncementGroup = false
+    } = req.body
+
+    if (!sessionId || !number || !question || !options) {
+      return res.status(400).json({
+        status: false,
+        message: 'sessionId, number, question, and options are required'
+      })
+    }
+
+    if (!Array.isArray(options) || options.length < 2) {
+      return res.status(400).json({
+        status: false,
+        message: 'options must be an array with at least 2 items'
+      })
+    }
+
+    if (options.length > 12) {
+      return res.status(400).json({
+        status: false,
+        message: 'options cannot exceed 12 items'
+      })
+    }
+
+    const session = getSession(sessionId)
+    if (!session) {
+      return res.status(404).json({ status: false, message: 'Device not found or not started' })
+    }
+
+    if (session.status !== 'connected') {
+      return res.status(422).json({
+        status: false,
+        message: `Device is not connected (current status: ${session.status})`
+      })
+    }
+
+    sendPollMessage(sessionId, number, question, options, selectableCount, toAnnouncementGroup)
+
+    return res.json({ status: true, message: 'Poll sent' })
   } catch (err) {
     return res.status(500).json({ status: false, message: err.message })
   }

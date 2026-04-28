@@ -203,3 +203,38 @@ export async function sendTextMessage(sessionId, number, text) {
     console.error(`[${sessionId}] sendMessage failed to ${jid}: ${err.message}`)
   })
 }
+
+/**
+ * Send a poll message.
+ * @param {string}   sessionId
+ * @param {string}   number            - phone number or JID
+ * @param {string}   question          - poll question / name
+ * @param {string[]} options           - poll choices (2–12 items)
+ * @param {number}   selectableCount   - how many options can be selected (default 1)
+ * @param {boolean}  toAnnouncementGroup
+ */
+export async function sendPollMessage(sessionId, number, question, options, selectableCount = 1, toAnnouncementGroup = false) {
+  const session = sessions[sessionId]
+  if (!session) throw new Error('Session not found')
+  if (session.status !== 'connected') throw new Error('Session not connected')
+
+  if (!Array.isArray(options) || options.length < 2) {
+    throw new Error('Poll requires at least 2 options')
+  }
+  if (options.length > 12) {
+    throw new Error('Poll supports a maximum of 12 options')
+  }
+
+  const jid = number.includes('@') ? number : `${number}@s.whatsapp.net`
+
+  session.sock.sendMessage(jid, {
+    poll: {
+      name: question,
+      values: options,
+      selectableCount,
+      toAnnouncementGroup
+    }
+  }).catch(err => {
+    console.error(`[${sessionId}] sendPoll failed to ${jid}: ${err.message}`)
+  })
+}

@@ -17,6 +17,7 @@ router.delete('/device/:id',          DeviceController.destroy)
 
 // ── Message ─────────────────────────────────────────────
 router.post('/message/send',                    MessageController.send)
+router.post('/message/poll',                    MessageController.sendPoll)
 router.get ('/message/:sessionId/outbound',     MessageController.outbound)
 router.get ('/message/:sessionId/incoming',     MessageController.incoming)
 
