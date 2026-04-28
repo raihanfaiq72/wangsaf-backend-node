@@ -1,10 +1,14 @@
 import express from 'express'
 
+import { authenticate } from '../middleware/auth.js'
 import * as DeviceController  from '../controllers/DeviceController.js'
 import * as MessageController from '../controllers/MessageController.js'
 import * as WebhookController from '../controllers/WebhookController.js'
 
 const router = express.Router()
+
+// ── Auth — semua route di bawah ini wajib token ──────────
+router.use(authenticate)
 
 // ── Device ──────────────────────────────────────────────
 router.post  ('/device',              DeviceController.create)
