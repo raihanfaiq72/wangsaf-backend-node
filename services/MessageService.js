@@ -1,7 +1,3 @@
-/**
- * MessageService.js
- * Handles outbound & inbound message logging.
- */
 
 import pool from '../database/db.js'
 
@@ -53,11 +49,6 @@ export async function getIncomingMessages(sessionId, limit = 50, offset = 0) {
   return rows
 }
 
-/**
- * Send a message and log it to DB.
- * sendFn is fire-and-forget — we log optimistically as 'sent'.
- * If sendFn throws synchronously (session not found, not connected), we catch it.
- */
 export async function sendAndLog(sessionId, recipient, message, sendFn) {
   const msgId = await logOutboundMessage(sessionId, recipient, message, 'pending')
   try {

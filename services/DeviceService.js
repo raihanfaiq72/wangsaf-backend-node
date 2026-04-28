@@ -1,7 +1,3 @@
-/**
- * DeviceService.js
- * CRUD operations for the `devices` table.
- */
 
 import pool from '../database/db.js'
 
@@ -50,7 +46,6 @@ export async function updateDeviceStatus(sessionId, status, qrCode = null, phone
     values.push(phoneNumber)
   }
 
-  // Clear QR when connected
   if (status === 'connected') {
     fields.push('qr_code = NULL')
   }

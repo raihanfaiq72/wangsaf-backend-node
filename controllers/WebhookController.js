@@ -1,15 +1,8 @@
-/**
- * WebhookController.js
- * Manage per-device webhook configuration.
- */
 
 import { getWebhook, setWebhook, deleteWebhook } from '../services/WebhookService.js'
 import { getDeviceBySessionId } from '../services/DeviceService.js'
 
-/**
- * GET /webhook/:sessionId
- * Get webhook config for a device.
- */
+
 export async function show(req, res) {
   try {
     const webhook = await getWebhook(req.params.sessionId)
@@ -24,11 +17,6 @@ export async function show(req, res) {
   }
 }
 
-/**
- * POST /webhook/:sessionId
- * Set or update webhook for a device.
- * Body: { url, secret?, events? }
- */
 export async function upsert(req, res) {
   try {
     const { sessionId } = req.params
@@ -51,10 +39,7 @@ export async function upsert(req, res) {
   }
 }
 
-/**
- * DELETE /webhook/:sessionId
- * Disable webhook for a device.
- */
+
 export async function destroy(req, res) {
   try {
     await deleteWebhook(req.params.sessionId)

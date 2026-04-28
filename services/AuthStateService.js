@@ -1,8 +1,3 @@
-/**
- * AuthStateService.js
- * Baileys auth state adapter backed by MariaDB.
- * Drop-in replacement for useMultiFileAuthState.
- */
 
 import {
   initAuthCreds,
@@ -50,7 +45,6 @@ export async function useDBAuthState(sessionId) {
     )
   }
 
-  // Load or init credentials
   const creds = (await readData('creds')) || initAuthCreds()
 
   const state = {

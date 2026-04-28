@@ -1,15 +1,8 @@
-/**
- * MessageController.js
- * Handles sending messages and retrieving message history.
- */
 
 import { sendAndLog, getOutboundMessages, getIncomingMessages } from '../services/MessageService.js'
 import { getSession, sendTextMessage } from '../services/WhatsAppService.js'
 
-/**
- * POST /message/send
- * Send a text message.
- */
+
 export async function send(req, res) {
   try {
     const { sessionId, number, message } = req.body

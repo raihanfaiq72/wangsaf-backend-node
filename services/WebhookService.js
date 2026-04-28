@@ -1,7 +1,3 @@
-/**
- * WebhookService.js
- * Dispatches events to registered webhook URLs.
- */
 
 import pool from '../database/db.js'
 
@@ -34,7 +30,6 @@ export async function dispatchWebhook(sessionId, event, payload) {
   const webhook = await getWebhook(sessionId)
   if (!webhook) return
 
-  // Filter by subscribed events if configured
   if (webhook.events) {
     const allowed = typeof webhook.events === 'string'
       ? JSON.parse(webhook.events)

@@ -1,8 +1,3 @@
-/**
- * WhatsAppService.js
- * Core Baileys session manager.
- * Handles connect, reconnect, QR, and event routing.
- */
 
 import makeWASocket, {
   fetchLatestBaileysVersion,
@@ -15,7 +10,6 @@ import { updateDeviceStatus, getActiveDevices } from './DeviceService.js'
 import { saveIncomingMessage } from './MessageService.js'
 import { dispatchWebhook } from './WebhookService.js'
 
-// Cache Baileys version — fetched once, reused on reconnects
 let baileysVersion = null
 async function getBaileysVersion() {
   if (!baileysVersion) {
@@ -27,7 +21,6 @@ async function getBaileysVersion() {
 }
 const sessions = {}
 
-// Track reconnect attempts per session to apply backoff
 const reconnectAttempts = {}
 
 export function getSession(sessionId) {
@@ -41,19 +34,14 @@ export function getAllSessions() {
   }))
 }
 
-/**
- * Codes that should NOT trigger a reconnect.
- * The session is either permanently gone or needs manual intervention.
- */
 const FATAL_CODES = new Set([
-  DisconnectReason.loggedOut,        // 401 — user logged out from phone
-  DisconnectReason.forbidden,        // 403 — banned
-  DisconnectReason.badSession,       // 500 — corrupted session
-  DisconnectReason.connectionReplaced // 440 — another device took over
+  DisconnectReason.loggedOut,        
+  DisconnectReason.forbidden,        
+  DisconnectReason.badSession,      
+  DisconnectReason.connectionReplaced 
 ])
 
 export async function startSession(sessionId) {
-  // Guard: if a socket is already connecting/connected, skip
   if (sessions[sessionId]?.sock) {
     try {
       sessions[sessionId].sock.ev.removeAllListeners()
@@ -84,7 +72,6 @@ export async function startSession(sessionId) {
   sessions[sessionId] = { sock, status: 'connecting' }
   await updateDeviceStatus(sessionId, 'connecting')
 
-  // ── QR timeout handle
   let qrTimeout = null
 
   sock.ev.on('connection.update', async ({ connection, qr, lastDisconnect }) => {
@@ -94,7 +81,6 @@ export async function startSession(sessionId) {
       await updateDeviceStatus(sessionId, 'scan_qr', qr)
       console.log(`📱 [${sessionId}] QR ready — scan now`)
 
-      // Auto-restart if QR not scanned in 60s
       clearTimeout(qrTimeout)
       qrTimeout = setTimeout(async () => {
         if (sessions[sessionId]?.status === 'scan_qr') {
@@ -106,7 +92,7 @@ export async function startSession(sessionId) {
 
     if (connection === 'open') {
       clearTimeout(qrTimeout)
-      reconnectAttempts[sessionId] = 0  // reset backoff on successful connect
+      reconnectAttempts[sessionId] = 0  
       sessions[sessionId].status = 'connected'
       const phone = sock.user?.id?.split(':')[0] || null
       await updateDeviceStatus(sessionId, 'connected', null, phone)
@@ -123,7 +109,6 @@ export async function startSession(sessionId) {
 
       await dispatchWebhook(sessionId, 'connection.close', { sessionId, code, reason })
 
-      // Fatal: clear session and stop
       if (FATAL_CODES.has(code)) {
         sessions[sessionId].status = code === DisconnectReason.loggedOut ? 'logged_out' : 'disconnected'
         await updateDeviceStatus(sessionId, sessions[sessionId].status)
@@ -139,7 +124,6 @@ export async function startSession(sessionId) {
         return
       }
 
-      // restartRequired (515): reconnect immediately, no backoff
       if (code === DisconnectReason.restartRequired) {
         sessions[sessionId].status = 'connecting'
         await updateDeviceStatus(sessionId, 'connecting')
@@ -148,7 +132,6 @@ export async function startSession(sessionId) {
         return
       }
 
-      // connectionClosed (428) / connectionLost (408) / timedOut: reconnect with backoff
       sessions[sessionId].status = 'disconnected'
       await updateDeviceStatus(sessionId, 'disconnected')
 
@@ -216,7 +199,6 @@ export async function sendTextMessage(sessionId, number, text) {
 
   const jid = number.includes('@') ? number : `${number}@s.whatsapp.net`
 
-  // Fire-and-forget — don't await WA delivery ack, it can take seconds
   session.sock.sendMessage(jid, { text }).catch(err => {
     console.error(`[${sessionId}] sendMessage failed to ${jid}: ${err.message}`)
   })
