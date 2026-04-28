@@ -17,6 +17,12 @@ import {
   deleteDevice
 } from '../services/DeviceService.js'
 
+import pool from '../database/db.js'
+
+async function clearAuthState(sessionId) {
+  await pool.query('DELETE FROM session_auth WHERE session_id = ?', [sessionId])
+}
+
 /**
  * POST /device
  * Create and start a new WhatsApp session.
@@ -179,7 +185,7 @@ export async function restart(req, res) {
 
 /**
  * DELETE /device/:id
- * Logout and remove a device.
+ * Logout, clear auth state, and remove a device completely.
  */
 export async function destroy(req, res) {
   try {
@@ -195,9 +201,45 @@ export async function destroy(req, res) {
       // Session may already be disconnected, continue
     }
 
+    // Bersihkan auth state dan device record
+    await clearAuthState(req.params.id)
     await deleteDevice(req.params.id)
 
     return res.json({ status: true, message: 'Device removed' })
+  } catch (err) {
+    return res.status(500).json({ status: false, message: err.message })
+  }
+}
+
+/**
+ * POST /device/:id/reset
+ * Clear auth state only — device record tetap ada, tapi harus scan QR ulang.
+ * Gunakan ini kalau pesan "waiting for this message" atau session corrupt.
+ */
+export async function reset(req, res) {
+  try {
+    const device = await getDeviceBySessionId(req.params.id)
+
+    if (!device) {
+      return res.status(404).json({ status: false, message: 'Device not found' })
+    }
+
+    // Stop socket dulu
+    try {
+      await stopSession(req.params.id)
+    } catch {}
+
+    // Hapus semua auth key dari DB
+    await clearAuthState(req.params.id)
+
+    // Start ulang — akan minta QR baru karena auth sudah kosong
+    await startSession(req.params.id)
+
+    return res.json({
+      status: true,
+      message: 'Auth state cleared. Scan QR again to reconnect.',
+      sessionId: req.params.id
+    })
   } catch (err) {
     return res.status(500).json({ status: false, message: err.message })
   }

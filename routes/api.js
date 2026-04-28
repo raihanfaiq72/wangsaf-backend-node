@@ -18,6 +18,7 @@ router.get   ('/device/:id',          DeviceController.show)
 router.get   ('/device/:id/qr',       DeviceController.qr)
 router.get   ('/device/:id/status',   DeviceController.status)
 router.post  ('/device/:id/restart',  DeviceController.restart)
+router.post  ('/device/:id/reset',    DeviceController.reset)
 router.delete('/device/:id',          DeviceController.destroy)
 
 // ── Message ─────────────────────────────────────────────
